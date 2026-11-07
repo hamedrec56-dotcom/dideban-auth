@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تأیید ایمیل | دیده‌بان</title>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;min-height:100vh;display:flex;align-items:center;
+justify-content:center;background:#f3f5f9;color:#263247;
+font-family:Tahoma,Arial,sans-serif;padding:20px
+}
+.card{
+width:100%;max-width:430px;background:white;border-radius:22px;
+padding:35px 25px;text-align:center;
+box-shadow:0 12px 40px #17233b14
+}
+.logo{font-size:25px;font-weight:bold;color:#2457a6;margin-bottom:28px}
+.symbol{font-size:55px;margin:15px}
+h1{font-size:21px;margin:15px 0}
+p{font-size:14px;line-height:2.2;color:#667085}
+#status{font-weight:bold;color:#2457a6}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="logo">دیده‌بان</div>
+<div class="symbol" id="symbol">✉️</div>
+<h1 id="title">در حال بررسی ایمیل شما</h1>
+<p id="status">لطفاً چند لحظه صبر کنید...</p>
+<p>از همراهی شما با دیده‌بان سپاسگزاریم.</p>
+</div>
+
+<script type="module">
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, applyActionCode } from
+"https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const title = document.getElementById("title");
+const status = document.getElementById("status");
+const symbol = document.getElementById("symbol");
+
+function showError(message) {
+ title.textContent = "تأیید ایمیل انجام نشد";
+ status.textContent = message;
+ symbol.textContent = "⚠️";
+}
+
+async function verifyEmail() {
+ const params = new URLSearchParams(location.search);
+ const mode = params.get("mode");
+ const code = params.get("oobCode");
+ const apiKey = params.get("apiKey");
+
+ if (mode !== "verifyEmail" || !code || !apiKey) {
+  showError("لینک تأیید نامعتبر است یا اطلاعات آن کامل نیست.");
+  return;
+ }
+
+ try {
+  const app = initializeApp({
+   apiKey: apiKey,
+   authDomain: "myapp-6acaf.firebaseapp.com",
+   projectId: "myapp-6acaf"
+  });
+  const auth = getAuth(app);
+  auth.languageCode = "fa";
+
+  await applyActionCode(auth, code);
+
+  title.textContent = "ایمیل شما تأیید شد";
+  status.textContent =
+   "حساب شما با موفقیت تأیید شد. اکنون می‌توانید به برنامه دیده‌بان برگردید و وارد شوید.";
+  symbol.textContent = "✅";
+
+ } catch (error) {
+  if (error.code === "auth/expired-action-code") {
+   showError("این لینک منقضی شده است. لطفاً درخواست ایمیل تأیید جدید بدهید.");
+  } else if (error.code === "auth/invalid-action-code") {
+   showError("این لینک نامعتبر است یا قبلاً استفاده شده است.");
+  } else {
+   showError("در تأیید ایمیل مشکلی پیش آمد. لطفاً دوباره تلاش کنید.");
+  }
+ }
+}
+
+verifyEmail();
+</script>
+</body>
+</html>
